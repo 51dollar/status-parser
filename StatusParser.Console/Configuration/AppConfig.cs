@@ -53,7 +53,7 @@ public sealed class ColumnMappingRule
 public sealed class NewStatusMappingRule
 {
     public string TargetNewStatusValue { get; init; } = string.Empty;
-    public string SourceValuePattern { get; init; } = string.Empty;
+    public string[] SourceValuePatterns { get; init; } = [];
 }
 
 public sealed class ReasonMappingRule
