@@ -1,0 +1,44 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.csproj.user
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## NuGet
+**/[Pp]ackages/*
+*.nupkg
+**/packages/*
+
+## Visual Studio
+.vs/
+*.sln.ide/
+*.swp
+*~
+
+## Logs
+Logs/*.log
+
+## OS
+Thumbs.db
+*.DS_Store
+
+## Project specific
+appsettings.*.local.json
