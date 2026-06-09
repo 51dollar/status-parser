@@ -78,6 +78,9 @@ public sealed class WorkflowOrchestrator : IWorkflowOrchestrator
 
                 var hasCommentHeader = commentColIndex >= 0 && sheet.HeaderIndex.ContainsKey(OutputCommentHeader);
 
+                var existingStatusColIdx =
+                    sheet.HeaderIndex.TryGetValue("Статус в системе", out var existingIdx) ? existingIdx : -1;
+
                 var sw = Stopwatch.StartNew();
                 var fileMatched = 0;
                 var fileSkipped = 0;
@@ -105,6 +108,17 @@ public sealed class WorkflowOrchestrator : IWorkflowOrchestrator
                     {
                         fileSkipped++;
                         continue;
+                    }
+
+                    if (existingStatusColIdx >= 0)
+                    {
+                        var existingVal = sheet.Data[r, existingStatusColIdx]?.ToString()?.Trim();
+                        if (!string.IsNullOrEmpty(existingVal) &&
+                            string.Equals(existingVal, matchedNewStatus, StringComparison.OrdinalIgnoreCase))
+                        {
+                            fileSkipped++;
+                            continue;
+                        }
                     }
 
                     var seqNumber = existingLastNumber + allRows.Count + 1;
