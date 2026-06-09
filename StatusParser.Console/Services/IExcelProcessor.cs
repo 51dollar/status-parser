@@ -4,5 +4,5 @@ namespace StatusParser.Console.Services;
 
 public interface IExcelProcessor
 {
-    ProcessResult Run(string outputFileName);
+    ProcessResult Run();
 }

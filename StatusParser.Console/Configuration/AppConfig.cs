@@ -10,6 +10,8 @@ public sealed class AppConfig
     public ColumnMappingRule[] ColumnMappingRules { get; init; } = [];
     public NewStatusMappingRule[] NewStatusMappingRules { get; init; } = [];
     public ReasonMappingRule[] ReasonMappingRules { get; init; } = [];
+    public string OutputFileName { get; init; } = string.Empty;
+    public string OutputFileNameDatePattern { get; init; } = string.Empty;
     public string OutputTableHeaderBackgroundColor { get; init; } = "yellow";
 
     [JsonIgnore]
@@ -33,6 +35,9 @@ public sealed class AppConfig
 
         if (ColumnMappingRules.Length == 0)
             errors.Add("At least one ColumnMappingRule is required.");
+
+        if (string.IsNullOrWhiteSpace(OutputFileName))
+            errors.Add("OutputFileName is required.");
 
         return errors;
     }

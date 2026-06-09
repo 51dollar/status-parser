@@ -56,21 +56,8 @@ public static class Program
                 return;
             }
 
-            logger.Info("Enter output file name (without extension): ");
-            var outputFileName = (System.Console.ReadLine() ?? string.Empty).Trim().Trim('\uFEFF', '\u200B');
-
-            while (string.IsNullOrWhiteSpace(outputFileName) || outputFileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
-            {
-                logger.Error("Invalid file name. Please enter a valid name: ");
-                outputFileName = (System.Console.ReadLine() ?? string.Empty).Trim().Trim('\uFEFF', '\u200B');
-            }
-
-            var outputPath = Path.Combine(config.ResolvedOutputFolder, $"{outputFileName}.xlsx");
-            logger.Info($"Output will be saved to: {outputPath}");
-            logger.Info($"Input folder: {inputFolder}");
-
             var processor = new ExcelProcessor(config, logger);
-            var result = processor.Run(outputFileName);
+            var result = processor.Run();
 
             System.Console.WriteLine();
             System.Console.WriteLine($"Total files processed: {result.TotalFiles}");
