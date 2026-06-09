@@ -1,6 +1,7 @@
 using System.Text.Json;
 using OfficeOpenXml;
 using StatusParser.Console.Configuration;
+using StatusParser.Console.Orchestration;
 using StatusParser.Console.Services;
 
 namespace StatusParser.Console;
@@ -56,8 +57,10 @@ public static class Program
                 return;
             }
 
-            var processor = new ExcelProcessor(config, logger);
-            var result = processor.Run();
+            var reader = new ExcelReader();
+            var writer = new ExcelWriter(config, logger);
+            var orchestrator = new WorkflowOrchestrator(config, logger, reader, writer);
+            var result = orchestrator.Run();
 
             System.Console.WriteLine();
             System.Console.WriteLine($"Total files processed: {result.TotalFiles}");
@@ -89,7 +92,6 @@ public static class Program
         }
         catch (InvalidOperationException)
         {
-            // Input is redirected (e.g. piped), just exit
             System.Console.ReadLine();
         }
     }
