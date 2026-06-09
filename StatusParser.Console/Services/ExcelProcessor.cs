@@ -222,9 +222,14 @@ public sealed class ExcelProcessor
             _logger.Warn("  No rows matched. Output file will be empty.");
         }
 
+        var articleColIndex = FindColumnIndexByTargetName("Артикул");
+        var outputRows = articleColIndex >= 0
+            ? RemoveDuplicateRows(allRows, articleColIndex, _logger)
+            : allRows;
+
         _logger.Info($"  Writing output: {outputPath}");
         _logger.Info($"  Starting from row {existingStartRow} (header row 1 + {existingStartRow - 1} existing data rows)");
-        WriteOutput(outputPath, allRows, outputColumnCount, existingStartRow);
+        WriteOutput(outputPath, outputRows, outputColumnCount, existingStartRow);
 
         totalSw.Stop();
         _logger.Info($"  Total elapsed: {totalSw.Elapsed.TotalSeconds:F2}s");
@@ -303,6 +308,35 @@ public sealed class ExcelProcessor
                     return rule.TargetNewStatusValue;
 
         return null;
+    }
+
+    private int FindColumnIndexByTargetName(string targetName)
+    {
+        for (var i = 0; i < _config.ColumnMappingRules.Length; i++)
+            if (string.Equals(_config.ColumnMappingRules[i].TargetColumnName, targetName, StringComparison.OrdinalIgnoreCase))
+                return i;
+        return -1;
+    }
+
+    private static List<object[]> RemoveDuplicateRows(List<object[]> rows, int articleColIndex, ILogger logger)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var result = new List<object[]>(rows.Count);
+
+        foreach (var row in rows)
+        {
+            var value = row[articleColIndex]?.ToString()?.Trim() ?? string.Empty;
+            if (!string.IsNullOrEmpty(value) && !seen.Add(value))
+                continue;
+
+            result.Add(row);
+        }
+
+        var removed = rows.Count - result.Count;
+        if (removed > 0)
+            logger.Info($"  Removed {removed} duplicate rows (by Артикул)");
+
+        return result;
     }
 
     private int FindRuleIndex(Func<ColumnMappingRule, bool> predicate)
