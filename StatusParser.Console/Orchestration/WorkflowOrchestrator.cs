@@ -56,6 +56,12 @@ public sealed class WorkflowOrchestrator : IWorkflowOrchestrator
             _logger.Info($"  Existing data ends at row {existingStartRow - 1}, last Номер={existingLastNumber}");
         }
 
+        var patternLookup = StatusMatcher.BuildPatternLookup(newStatusRules);
+        var articleColIndex = DuplicateRemover.FindColumnIndexByTargetName(rules, "Артикул");
+        var seenArticles = articleColIndex >= 0
+            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            : null;
+
         var totalDataRows = 0;
         var totalSkippedRows = 0;
 
@@ -102,7 +108,10 @@ public sealed class WorkflowOrchestrator : IWorkflowOrchestrator
                 for (var r = 1; r < sheet.RowCount; r++)
                 {
                     var rawNewStatus = ExcelReader.GetRawNewStatusValue(sheet.Data, r, sheet.ColumnCount, f10ColIdx);
-                    var matchedNewStatus = StatusMatcher.MatchStatus(rawNewStatus, newStatusRules);
+                    var trimmedSource = rawNewStatus?.Trim();
+                    var matchedNewStatus = trimmedSource != null
+                        ? patternLookup.GetValueOrDefault(trimmedSource)
+                        : null;
 
                     if (matchedNewStatus == null)
                     {
@@ -123,6 +132,17 @@ public sealed class WorkflowOrchestrator : IWorkflowOrchestrator
 
                     var seqNumber = existingLastNumber + allRows.Count + 1;
                     var outputRow = mapper.Map(sheet.Data, r, matchedNewStatus, seqNumber);
+
+                    if (seenArticles != null)
+                    {
+                        var articleValue = outputRow[articleColIndex]?.ToString()?.Trim();
+                        if (!string.IsNullOrEmpty(articleValue) && !seenArticles.Add(articleValue))
+                        {
+                            fileSkipped++;
+                            continue;
+                        }
+                    }
+
                     allRows.Add(outputRow);
                     fileMatched++;
                     matchCounts[matchedNewStatus]++;
@@ -191,14 +211,9 @@ public sealed class WorkflowOrchestrator : IWorkflowOrchestrator
             _logger.Warn("  No rows matched. Output file will be empty.");
         }
 
-        var articleColIndex = DuplicateRemover.FindColumnIndexByTargetName(rules, "Артикул");
-        var outputRows = articleColIndex >= 0
-            ? DuplicateRemover.RemoveDuplicateRows(allRows, articleColIndex, _logger)
-            : allRows;
-
         _logger.Info($"  Writing output: {outputPath}");
         _logger.Info($"  Starting from row {existingStartRow} (header row 1 + {existingStartRow - 1} existing data rows)");
-        _writer.WriteOutput(outputPath, outputRows, outputColumnCount, existingStartRow);
+        _writer.WriteOutput(outputPath, allRows, outputColumnCount, existingStartRow);
 
         totalSw.Stop();
         _logger.Info($"  Total elapsed: {totalSw.Elapsed.TotalSeconds:F2}s");
